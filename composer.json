@@ -1,0 +1,24 @@
+{
+  "name": "tourcms/tworiver",
+  "description": "Two River Ticket System Api",
+  "type": "library",
+  "keywords": [
+    "yii2",
+    "extension"
+  ],
+  "license": "Apache-2.0",
+  "authors": [
+    {
+      "name": "baoguok",
+      "email": "baoguok@gmail.com"
+    }
+  ],
+  "require": {
+    "guzzlehttp/guzzle": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "tourcms\\tworiver\\": "src"
+    }
+  }
+}
