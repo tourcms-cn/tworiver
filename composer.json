@@ -3,7 +3,7 @@
   "description": "Two River Ticket System Api",
   "type": "library",
   "keywords": [
-    "yii2",
+    "tourcms",
     "extension"
   ],
   "license": "Apache-2.0",
