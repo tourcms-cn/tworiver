@@ -1,6 +1,6 @@
 <?php
 
-namespace tourcms\tworiver\src;
+namespace tourcms\tworiver;
 
 use GuzzleHttp\Client;
 
