@@ -53,7 +53,7 @@ class TwoRiverApi
         unset($all['changeNoticeUrl']);
         unset($all['amt']);
 
-        return array_keys(self::map());
+        return $all;
     }
 
     /**
