@@ -229,7 +229,7 @@ class TwoRiverTicket
         $req_data['sign'] = $signStr;
 
         $client = new Client([
-            'timeout' => 2.0,
+            'timeout' => 5.0,
             'headers' => [
                 'Content-Type' => 'application/json:charset=utf-8',
             ],

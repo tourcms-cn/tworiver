@@ -1,6 +1,7 @@
 <?php
 
 namespace tourcms\tworiver;
+
 class TwoRiverApi
 {
     /*
@@ -32,8 +33,26 @@ class TwoRiverApi
     /**
      * api列表
      */
-    public static function apiList()
+    public static function all()
     {
+        return array_keys(self::map());
+    }
+
+    /**
+     * api列表
+     */
+    public static function listOfApi()
+    {
+        $all = self::map();
+        unset($all['submit']);
+        unset($all['query']);
+        unset($all['refundCharges']);
+        unset($all['refund']);
+        unset($all['msg']);
+        unset($all['changeSign']);
+        unset($all['changeNoticeUrl']);
+        unset($all['amt']);
+
         return array_keys(self::map());
     }
 
