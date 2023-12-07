@@ -77,8 +77,9 @@ class TwoRiverTicket
     public function line($period = '全天')
     {
         $allPeriod = ['日游', '夜游', '全天'];
-        if (!in_array($period, $allPeriod))
+        if (!in_array($period, $allPeriod)) {
             $period = '全天';
+        }
 
         return TwoRiverTicket::requestData('ticket.cmm.line', ['period' => $period]);
     }
@@ -243,13 +244,16 @@ class TwoRiverTicket
 
         if ($response->getStatusCode() == '200') {
             $data = json_decode($response->getBody()->getContents());
-            if ($data->code != '0000')
+            if ($data->code != '0000') {
                 return $data->description;
+            }
 
-            if ($data->data)
+            if ($data->data) {
                 return json_decode($data->data, true);
-            else
+            } else {
                 return $data->data;
+            }
+
         }
 
         return false;
@@ -278,5 +282,4 @@ class TwoRiverTicket
 
         return strtoupper($md5);
     }
-
 }
