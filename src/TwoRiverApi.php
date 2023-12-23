@@ -66,4 +66,16 @@ class TwoRiverApi
         return isset($apiMap[$api]) ? $apiMap[$api] : '未知接口';
     }
 
+    /**
+     * 航线时段.
+     * @return string[]
+     */
+    public static function linePeriods(){
+        return [
+            0 => '全天',
+            1 => '日游',
+            2 => '夜游',
+        ];
+    }
+
 }

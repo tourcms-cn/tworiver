@@ -74,12 +74,10 @@ class TwoRiverTicket
      * @return void
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
-    public function line($period = '全天')
+    public function line($period = 0)
     {
-        $allPeriod = ['日游', '夜游', '全天'];
-        if (!in_array($period, $allPeriod)) {
-            $period = '全天';
-        }
+        $allPeriod = TwoRiverApi::linePeriods();
+        $period = $allPeriod[$period] ?? '全天';
 
         return TwoRiverTicket::requestData('ticket.cmm.line', ['period' => $period]);
     }
