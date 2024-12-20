@@ -255,8 +255,6 @@ class TwoRiverTicket
         }
 
         return false;
-
-        return false;
     }
 
     /**
