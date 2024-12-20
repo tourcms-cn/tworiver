@@ -226,38 +226,35 @@ class TwoRiverTicket
 
         $req_data['sign'] = $signStr;
 
-        $data_key = md5(serialize($data));
-        return \Yii::$app->cache->getOrSet('ticket_' . $service . '_' . $data_key, function () use ($req_data, $data) {
-            $client = new Client([
-                'timeout' => 5.0,
-                'headers' => [
-                    'Content-Type' => 'application/json:charset=utf-8',
-                ],
-            ]);
-            $response = $client->request(
-                'POST',
-                $this->api_url,
-                [
-                    \GuzzleHttp\RequestOptions::JSON => $req_data,
-                ]
-            );
+        $client = new Client([
+            'timeout' => 5.0,
+            'headers' => [
+                'Content-Type' => 'application/json:charset=utf-8',
+            ],
+        ]);
+        $response = $client->request(
+            'POST',
+            $this->api_url,
+            [
+                \GuzzleHttp\RequestOptions::JSON => $req_data,
+            ]
+        );
 
-            if ($response->getStatusCode() == '200') {
-                $data = json_decode($response->getBody()->getContents());
-                if ($data->code != '0000') {
-                    return $data->description;
-                }
-
-                if ($data->data) {
-                    return json_decode($data->data, true);
-                } else {
-                    return $data->data;
-                }
-
+        if ($response->getStatusCode() == '200') {
+            $data = json_decode($response->getBody()->getContents());
+            if ($data->code != '0000') {
+                return $data->description;
             }
 
-            return false;
-        }, 3600);
+            if ($data->data) {
+                return json_decode($data->data, true);
+            } else {
+                return $data->data;
+            }
+
+        }
+
+        return false;
 
         return false;
     }
