@@ -3,6 +3,9 @@
 namespace tourcms\tworiver;
 
 use GuzzleHttp\Client;
+use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+use Monolog\Logger;
 
 class TwoRiverTicket
 {
@@ -210,50 +213,51 @@ class TwoRiverTicket
      */
     public function requestData($service, $data = array())
     {
-        $req_data = [
-            "mch_id" => $this->mch_id,
-            "nonce_str" => str_replace('-', '', uuid()),
-            "service" => $service,
-            "time" => date('YmdHis000'),
-        ];
-        if ($data) {
-            $req_data['data'] = json_encode($data);
-        } else {
-            $req_data['data'] = json_encode(['date' => date('Ymd')]);
-        }
-
-        $signStr = $this->signData($req_data, $this->key);
-
-        $req_data['sign'] = $signStr;
-
-        $client = new Client([
-            'timeout' => 5.0,
-            'headers' => [
-                'Content-Type' => 'application/json:charset=utf-8',
-            ],
-        ]);
-        $response = $client->request(
-            'POST',
-            $this->api_url,
-            [
-                \GuzzleHttp\RequestOptions::JSON => $req_data,
-            ]
-        );
-
-        if ($response->getStatusCode() == '200') {
-            $data = json_decode($response->getBody()->getContents());
-            if ($data->code != '0000') {
-                return $data->description;
-            }
-
-            if ($data->data) {
-                return json_decode($data->data, true);
+        // create a log channel
+        $log = new Logger('tworiver-ship');
+        $log->pushHandler(new StreamHandler('/var/log/tworiver-ship.log', Level::Error));
+        try {
+            $req_data = [
+                "mch_id" => $this->mch_id,
+                "nonce_str" => bin2hex(random_bytes(16)),
+                "service" => $service,
+                "time" => self::getMillisecondTimestamp(),
+            ];
+            if ($data) {
+                $req_data['data'] = json_encode($data);
             } else {
-                return $data->data;
+                $req_data['data'] = json_encode(['date' => date('Ymd')]);
             }
 
-        }
+            $signStr = $this->signData($req_data, $this->key);
 
+            $req_data['sign'] = $signStr;
+
+            $client = new Client([
+                'timeout' => 5.0,
+                'headers' => [
+                    'Content-Type' => 'application/json:charset=utf-8',
+                ],
+            ]);
+            $response = $client->request(
+                'POST',
+                $this->api_url,
+                [
+                    \GuzzleHttp\RequestOptions::JSON => $req_data,
+                ]
+            );
+
+            if ($response->getStatusCode() == '200') {
+                $data = json_decode($response->getBody()->getContents());
+                if ($data->code != '0000')
+                    $log->error('Bar');
+
+                return json_decode($data->data, true);
+
+            }
+        } catch (\Exception $e) {
+            $log->error($e->getMessage());
+        }
         return false;
     }
 
@@ -279,5 +283,16 @@ class TwoRiverTicket
         $md5 = md5($stringSignTemp);
 
         return strtoupper($md5);
+    }
+
+    /**
+     * 生成带毫秒的时间戳
+     * @return string
+     */
+    private function getMillisecondTimestamp()
+    {
+        list($usec, $sec) = explode(" ", microtime());
+        $usec = substr($usec, 0, 3); // 取毫秒部分
+        return date('YmdHis', $sec) . $usec;
     }
 }

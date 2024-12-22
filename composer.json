@@ -15,7 +15,9 @@
   ],
   "minimum-stability": "stable",
   "require": {
-    "guzzlehttp/guzzle": "*"
+    "ext-json": "*",
+    "guzzlehttp/guzzle": "*",
+    "monolog/monolog": "^3.8"
   },
   "autoload": {
     "psr-4": {
