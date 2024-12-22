@@ -250,7 +250,7 @@ class TwoRiverTicket
             if ($response->getStatusCode() == '200') {
                 $data = json_decode($response->getBody()->getContents());
                 if ($data->code != '0000')
-                    $log->error('Bar');
+                    $log->error($data);
 
                 return json_decode($data->data, true);
 
@@ -258,6 +258,7 @@ class TwoRiverTicket
         } catch (\Exception $e) {
             $log->error($e->getMessage());
         }
+
         return false;
     }
 
