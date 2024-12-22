@@ -16,7 +16,7 @@
   "minimum-stability": "stable",
   "require": {
     "ext-json": "*",
-    "guzzlehttp/guzzle": "*",
+    "ext-curl": "*",
     "monolog/monolog": "^3.8"
   },
   "autoload": {

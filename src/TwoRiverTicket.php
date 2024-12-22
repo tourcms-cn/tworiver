@@ -2,7 +2,6 @@
 
 namespace tourcms\tworiver;
 
-use GuzzleHttp\Client;
 use Monolog\Handler\StreamHandler;
 use Monolog\Level;
 use Monolog\Logger;
@@ -211,6 +210,14 @@ class TwoRiverTicket
      * @return false|mixed
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
+    /**
+     * 获取接口数据.
+     *
+     * @param $service
+     * @param $data
+     * @return false|mixed
+     * @throws \Exception
+     */
     public function requestData($service, $data = array())
     {
         // create a log channel
@@ -233,27 +240,27 @@ class TwoRiverTicket
 
             $req_data['sign'] = $signStr;
 
-            $client = new Client([
-                'timeout' => 5.0,
-                'headers' => [
-                    'Content-Type' => 'application/json:charset=utf-8',
-                ],
-            ]);
-            $response = $client->request(
-                'POST',
-                $this->api_url,
-                [
-                    \GuzzleHttp\RequestOptions::JSON => $req_data,
-                ]
+            $json_data = json_encode($req_data);
+
+            $ch = curl_init($this->api_url);
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen($json_data))
             );
 
-            if ($response->getStatusCode() == '200') {
-                $data = json_decode($response->getBody()->getContents());
+            $response = curl_exec($ch);
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($http_code == 200) {
+                $data = json_decode($response);
                 if ($data->code != '0000')
                     $log->error($data);
 
                 return json_decode($data->data, true);
-
             }
         } catch (\Exception $e) {
             $log->error($e->getMessage());
