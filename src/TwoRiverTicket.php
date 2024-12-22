@@ -3,7 +3,6 @@
 namespace tourcms\tworiver;
 
 use Monolog\Handler\StreamHandler;
-use Monolog\Level;
 use Monolog\Logger;
 
 class TwoRiverTicket
@@ -222,7 +221,7 @@ class TwoRiverTicket
     {
         // create a log channel
         $log = new Logger('tworiver-ship');
-        $log->pushHandler(new StreamHandler('/var/log/tworiver-ship.log', Level::Error));
+        $log->pushHandler(new StreamHandler('/var/log/tworiver-ship.log', Logger::ERROR));
         try {
             $req_data = [
                 "mch_id" => $this->mch_id,
@@ -258,7 +257,7 @@ class TwoRiverTicket
             if ($http_code == 200) {
                 $data = json_decode($response);
                 if ($data->code != '0000')
-                    $log->error($data);
+                    $log->error(json_encode($data));
 
                 return json_decode($data->data, true);
             }
@@ -285,9 +284,11 @@ class TwoRiverTicket
                 continue;
             }
 
-            $stringA .= "{$k}={$v}&";
+            $stringA .= "{
+                    $k}={
+                    $v}&";
         }
-        $stringSignTemp = $stringA . "key=" . $key;
+        $stringSignTemp = $stringA . "key = " . $key;
         $md5 = md5($stringSignTemp);
 
         return strtoupper($md5);
