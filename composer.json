@@ -16,8 +16,7 @@
   "minimum-stability": "stable",
   "require": {
     "ext-json": "*",
-    "ext-curl": "*",
-    "monolog/monolog": "2.*"
+    "ext-curl": "*"
   },
   "autoload": {
     "psr-4": {

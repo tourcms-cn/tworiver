@@ -2,9 +2,6 @@
 
 namespace tourcms\tworiver;
 
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
-
 class TwoRiverTicket
 {
     protected $api_url = '';
@@ -219,50 +216,40 @@ class TwoRiverTicket
      */
     public function requestData($service, $data = array())
     {
-        // create a log channel
-        $log = new Logger('tworiver-ship');
-        $log->pushHandler(new StreamHandler('/var/log/tworiver-ship.log', Logger::ERROR));
-        try {
-            $req_data = [
-                "mch_id" => $this->mch_id,
-                "nonce_str" => bin2hex(random_bytes(16)),
-                "service" => $service,
-                "time" => self::getMillisecondTimestamp(),
-            ];
-            if ($data) {
-                $req_data['data'] = json_encode($data);
-            } else {
-                $req_data['data'] = json_encode(['date' => date('Ymd')]);
-            }
+        $req_data = [
+            "mch_id" => $this->mch_id,
+            "nonce_str" => bin2hex(random_bytes(16)),
+            "service" => $service,
+            "time" => self::getMillisecondTimestamp(),
+        ];
+        if ($data) {
+            $req_data['data'] = json_encode($data);
+        } else {
+            $req_data['data'] = json_encode(['date' => date('Ymd')]);
+        }
 
-            $signStr = $this->signData($req_data, $this->key);
+        $signStr = $this->signData($req_data, $this->key);
 
-            $req_data['sign'] = $signStr;
+        $req_data['sign'] = $signStr;
 
-            $json_data = json_encode($req_data);
+        $json_data = json_encode($req_data);
 
-            $ch = curl_init($this->api_url);
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                    'Content-Type: application/json',
-                    'Content-Length: ' . strlen($json_data))
-            );
+        $ch = curl_init($this->api_url);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($json_data))
+        );
 
-            $response = curl_exec($ch);
-            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+        $response = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
 
-            if ($http_code == 200) {
-                $data = json_decode($response);
-                if ($data->code != '0000')
-                    $log->error(json_encode($data));
-
-                return json_decode($data->data, true);
-            }
-        } catch (\Exception $e) {
-            $log->error($e->getMessage());
+        if ($http_code == 200) {
+            $data = json_decode($response);
+            return json_decode($data->data, true);
         }
 
         return false;
