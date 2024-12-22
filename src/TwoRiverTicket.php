@@ -216,43 +216,74 @@ class TwoRiverTicket
      */
     public function requestData($service, $data = array())
     {
+        // 定义常量
+        define('CONTENT_TYPE', 'Content-Type: application/json');
+        define('API_URL', $this->api_url);
+
+        $nonce_str = bin2hex(random_bytes(16));
+        $time = self::getMillisecondTimestamp();
         $req_data = [
             "mch_id" => $this->mch_id,
-            "nonce_str" => bin2hex(random_bytes(16)),
+            "nonce_str" => $nonce_str,
             "service" => $service,
-            "time" => self::getMillisecondTimestamp(),
+            "time" => $time,
         ];
-        if ($data) {
+
+        // 处理 data 参数
+        if (!empty($data)) {
             $req_data['data'] = json_encode($data);
         } else {
             $req_data['data'] = json_encode(['date' => date('Ymd')]);
         }
 
+        // 签名
         $signStr = $this->signData($req_data, $this->key);
-
         $req_data['sign'] = $signStr;
 
+        // JSON 编码请求数据
         $json_data = json_encode($req_data);
-
-        $ch = curl_init($this->api_url);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-                'Content-Type: application/json',
-                'Content-Length: ' . strlen($json_data))
-        );
-
-        $response = curl_exec($ch);
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($http_code == 200) {
-            $data = json_decode($response);
-            return json_decode($data->data, true);
+        if ($json_data === false) {
+            throw new Exception('JSON encode failed for request data.');
         }
 
-        return false;
+        // 初始化 cURL 会话
+        $ch = curl_init(API_URL);
+
+        // 设置 cURL 选项
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [CONTENT_TYPE, 'Content-Length: ' . strlen($json_data)]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
+
+        // 执行 cURL 请求
+        $response = curl_exec($ch);
+
+        // 检查是否有错误发生
+        if (curl_errno($ch)) {
+            throw new Exception('cURL request failed: ' . curl_error($ch));
+        }
+
+        // 关闭 cURL 会话
+        curl_close($ch);
+
+        // 解码响应数据
+        $resp_data = json_decode($response, true);
+        if ($resp_data === null && json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('JSON decode failed for response data.');
+        }
+
+        // 检查响应状态码
+        if ($resp_data['code'] != '0000') {
+            throw new Exception('Request failed with code: ' . $resp_data['code']);
+        }
+
+        // 解码响应数据中的 data 字段
+        $data = json_decode($resp_data['data'], true);
+        if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('JSON decode failed for response data field.');
+        }
+
+        return $data;
     }
 
     /**
@@ -271,11 +302,9 @@ class TwoRiverTicket
                 continue;
             }
 
-            $stringA .= "{
-                    $k}={
-                    $v}&";
+            $stringA .= "{$k}={$v}&";
         }
-        $stringSignTemp = $stringA . "key = " . $key;
+        $stringSignTemp = $stringA . "key=" . $key;
         $md5 = md5($stringSignTemp);
 
         return strtoupper($md5);
@@ -288,7 +317,7 @@ class TwoRiverTicket
     private function getMillisecondTimestamp()
     {
         list($usec, $sec) = explode(" ", microtime());
-        $usec = substr($usec, 0, 3); // 取毫秒部分
+        $usec = substr($usec, 2, 3); // 取毫秒部分
         return date('YmdHis', $sec) . $usec;
     }
 }
