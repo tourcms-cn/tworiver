@@ -17,7 +17,7 @@
   "require": {
     "ext-json": "*",
     "ext-curl": "*",
-    "monolog/monolog": "^3.8"
+    "monolog/monolog": "2.*"
   },
   "autoload": {
     "psr-4": {
