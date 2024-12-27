@@ -259,18 +259,12 @@ class TwoRiverTicket
             throw new Exception('JSON decode failed for response data.');
         }
 
-        // 检查响应状态码
-        if ($resp_data['code'] != '0000') {
-            throw new Exception('Request failed with code: ' . $resp_data['code']);
-        }
-
         // 解码响应数据中的 data 字段
-        $data = json_decode($resp_data['data'], true);
-        if ($data === null && json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception('JSON decode failed for response data field.');
+        if ($resp_data['data'] != null) {
+            return json_decode($resp_data['data'], true);
         }
 
-        return $data;
+        return $resp_data['data'] ?? [];
     }
 
     /**
