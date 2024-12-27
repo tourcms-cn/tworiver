@@ -2,6 +2,8 @@
 
 namespace tourcms\tworiver;
 
+use Exception;
+
 class TwoRiverTicket
 {
     protected $api_url = '';
@@ -38,7 +40,6 @@ class TwoRiverTicket
      * 1.7 订票人类型接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function passenger()
     {
@@ -48,7 +49,7 @@ class TwoRiverTicket
     /**
      * 1.8 码头接口
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     *
      */
     public function wharf()
     {
@@ -59,7 +60,6 @@ class TwoRiverTicket
      * 1.9 客源地接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function from()
     {
@@ -70,7 +70,6 @@ class TwoRiverTicket
      * 1.10 航线接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function line($period = 0)
     {
@@ -84,7 +83,6 @@ class TwoRiverTicket
      * 1.11 价格接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function price()
     {
@@ -95,7 +93,6 @@ class TwoRiverTicket
      * 1.12 调度航班接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function dispatch($request_data = [])
     {
@@ -106,7 +103,6 @@ class TwoRiverTicket
      * 1.13 下单接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function submit($request_data)
     {
@@ -117,7 +113,6 @@ class TwoRiverTicket
      * 1.14 订单查询接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function query($request_data = [])
     {
@@ -128,7 +123,6 @@ class TwoRiverTicket
      * 1.15 退票手续费接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function refundCharges($request_data)
     {
@@ -139,7 +133,6 @@ class TwoRiverTicket
      * 1.16 退票接口
      *
      * @return void
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function refund($request_data)
     {
@@ -150,7 +143,6 @@ class TwoRiverTicket
      * 1.18 消息查询接口
      *
      * @return false|mixed
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function msg($post_date)
     {
@@ -180,7 +172,6 @@ class TwoRiverTicket
      * 1.21 证件类型
      *
      * @return false|mixed
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function card()
     {
@@ -191,7 +182,6 @@ class TwoRiverTicket
      * 1.22 账户资金查询
      *
      * @return false|mixed
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function amt()
     {
@@ -204,7 +194,6 @@ class TwoRiverTicket
      * @param $service
      * @param $data
      * @return false|mixed
-     * @throws \GuzzleHttp\Exception\GuzzleException
      */
     /**
      * 获取接口数据.
@@ -212,14 +201,9 @@ class TwoRiverTicket
      * @param $service
      * @param $data
      * @return false|mixed
-     * @throws \Exception
      */
     public function requestData($service, $data = array())
     {
-        // 定义常量
-        define('CONTENT_TYPE', 'Content-Type: application/json');
-        define('API_URL', $this->api_url);
-
         $nonce_str = bin2hex(random_bytes(16));
         $time = self::getMillisecondTimestamp();
         $req_data = [
@@ -247,11 +231,14 @@ class TwoRiverTicket
         }
 
         // 初始化 cURL 会话
-        $ch = curl_init(API_URL);
+        $ch = curl_init($this->api_url);
 
         // 设置 cURL 选项
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [CONTENT_TYPE, 'Content-Length: ' . strlen($json_data)]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($json_data),
+        ]);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
 
