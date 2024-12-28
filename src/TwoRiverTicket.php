@@ -204,67 +204,93 @@ class TwoRiverTicket
      */
     public function requestData($service, $data = array())
     {
-        $nonce_str = bin2hex(random_bytes(16));
-        $time = self::getMillisecondTimestamp();
-        $req_data = [
-            "mch_id" => $this->mch_id,
-            "nonce_str" => $nonce_str,
-            "service" => $service,
-            "time" => $time,
-        ];
+        try {
+            $nonce_str = bin2hex(random_bytes(16));
+            $time = self::getMillisecondTimestamp();
+            $req_data = [
+                "mch_id" => $this->mch_id,
+                "nonce_str" => $nonce_str,
+                "service" => $service,
+                "time" => $time,
+            ];
 
-        // 处理 data 参数
-        if (!empty($data)) {
-            $req_data['data'] = json_encode($data);
-        } else {
-            $req_data['data'] = json_encode(['date' => date('Ymd')]);
+            // 处理 data 参数
+            if (!empty($data)) {
+                $req_data['data'] = json_encode($data);
+            } else {
+                $req_data['data'] = json_encode(['date' => date('Ymd')]);
+            }
+
+            // 签名
+            $signStr = $this->signData($req_data, $this->key);
+            $req_data['sign'] = $signStr;
+
+            // JSON 编码请求数据
+            $json_data = json_encode($req_data);
+            if ($json_data === false) {
+                throw new Exception('JSON encode failed for request data.');
+            }
+
+            // 初始化 cURL 会话
+            $ch = curl_init($this->api_url);
+
+            // 设置 cURL 选项
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($json_data),
+            ]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
+
+            // 执行 cURL 请求
+            $response = curl_exec($ch);
+
+            // 检查是否有错误发生
+            if (curl_errno($ch)) {
+                throw new Exception('cURL request failed: ' . curl_error($ch));
+            }
+
+            // 关闭 cURL 会话
+            curl_close($ch);
+
+            // 解码响应数据
+            $resp_data = json_decode($response, true);
+            if ($resp_data === null && json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception('JSON decode failed for response data.');
+            }
+
+            // 业务异常判断
+            if (isset($resp_data['code'])) {
+                switch ($resp_data['code']) {
+                    case '0000':
+                        // 成功
+                        break;
+                    case '1000':
+                        throw new Exception('校验错误');
+                    case '2000':
+                        throw new Exception('系统异常');
+                    case '1001':
+                        throw new Exception('参数错误');
+                    default:
+                        throw new Exception('未知错误代码: ' . $resp_data['code']);
+                }
+            } else {
+                throw new Exception('响应数据中缺少 code 字段');
+            }
+
+            // 解码响应数据中的 data 字段
+            if ($resp_data['data'] != null) {
+                return json_decode($resp_data['data'], true);
+            }
+
+            return $resp_data['data'] ?? [];
+        } catch (Exception $e) {
+            // 记录错误日志
+//            error_log('Request failed: ' . $e->getMessage());
+            // 可以根据需要抛出异常或返回错误信息
+            throw $e;
         }
-
-        // 签名
-        $signStr = $this->signData($req_data, $this->key);
-        $req_data['sign'] = $signStr;
-
-        // JSON 编码请求数据
-        $json_data = json_encode($req_data);
-        if ($json_data === false) {
-            throw new Exception('JSON encode failed for request data.');
-        }
-
-        // 初始化 cURL 会话
-        $ch = curl_init($this->api_url);
-
-        // 设置 cURL 选项
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-            'Content-Length: ' . strlen($json_data),
-        ]);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $json_data);
-
-        // 执行 cURL 请求
-        $response = curl_exec($ch);
-
-        // 检查是否有错误发生
-        if (curl_errno($ch)) {
-            throw new Exception('cURL request failed: ' . curl_error($ch));
-        }
-
-        // 关闭 cURL 会话
-        curl_close($ch);
-
-        // 解码响应数据
-        $resp_data = json_decode($response, true);
-        if ($resp_data === null && json_last_error() !== JSON_ERROR_NONE) {
-            throw new Exception('JSON decode failed for response data.');
-        }
-
-        // 解码响应数据中的 data 字段
-        if ($resp_data['data'] != null) {
-            return json_decode($resp_data['data'], true);
-        }
-
-        return $resp_data['data'] ?? [];
     }
 
     /**
