@@ -268,8 +268,8 @@ class TwoRiverTicket
                         break;
                     case '1000':
                         throw new Exception('校验错误');
-                    case '2000':
-                        throw new Exception('系统异常');
+//                    case '2000':
+//                        throw new Exception('系统异常');
                     case '1001':
                         throw new Exception('参数错误');
                     default:
