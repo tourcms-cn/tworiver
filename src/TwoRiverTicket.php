@@ -284,7 +284,7 @@ class TwoRiverTicket
                 return json_decode($resp_data['data'], true);
             }
 
-            return $resp_data['data'] ?? [];
+            return [];
         } catch (Exception $e) {
             // 记录错误日志
 //            error_log('Request failed: ' . $e->getMessage());
