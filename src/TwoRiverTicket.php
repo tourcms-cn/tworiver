@@ -248,6 +248,7 @@ class TwoRiverTicket
 
             // 检查是否有错误发生
             if (curl_errno($ch)) {
+                error_log(json_encode(curl_error($ch)));
                 throw new Exception('cURL request failed: ' . curl_error($ch));
             }
 
@@ -257,38 +258,15 @@ class TwoRiverTicket
             // 解码响应数据
             $resp_data = json_decode($response, true);
             if ($resp_data === null && json_last_error() !== JSON_ERROR_NONE) {
+                error_log(json_encode($resp_data));
                 throw new Exception('JSON decode failed for response data.');
             }
 
-            // 业务异常判断
-            if (isset($resp_data['code'])) {
-                switch ($resp_data['code']) {
-                    case '0000':
-                        // 成功
-                        break;
-                    case '1000':
-                        throw new Exception('校验错误');
-                    case '2000':
-                        break;
-//                        throw new Exception('系统异常');
-                    case '1001':
-                        throw new Exception('参数错误');
-                    default:
-                        throw new Exception('未知错误代码: ' . $resp_data['code']);
-                }
-            } else {
-                throw new Exception('响应数据中缺少 code 字段');
-            }
+            return $response;
 
-            // 解码响应数据中的 data 字段
-            if ($resp_data['data'] != null) {
-                return json_decode($resp_data['data'], true);
-            }
-
-            return [];
         } catch (Exception $e) {
             // 记录错误日志
-//            error_log('Request failed: ' . $e->getMessage());
+            error_log('Request failed: ' . $e->getMessage());
             // 可以根据需要抛出异常或返回错误信息
             throw $e;
         }
