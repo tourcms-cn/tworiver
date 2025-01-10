@@ -9,9 +9,9 @@ class TwoRiverTicket
     protected $api_url = '';
     protected $mch_id = '';
     protected $key = '';
-    protected $logPath = '/var/log/TwoRiver.log';
+    protected $logPath = '';
 
-    function __construct($api_url, $mch_id, $key, $logPath)
+    function __construct($api_url, $mch_id, $key, $logPath = '')
     {
         $this->api_url = $api_url;
         $this->mch_id = $mch_id;
@@ -343,15 +343,28 @@ class TwoRiverTicket
      */
     private function error_log($msg, $msg_type = 3)
     {
-        // 检查是否设置了日志路径，如果没有，则使用默认路径
-        if (!$this->logPath)
-            $logPath = __DIR__ . '/logs/error.log';
+        // 确保日志路径已初始化
+        if (empty($this->logPath)) {
+            $this->logPath = __DIR__ . '/logs/tworiver_' . date('Ymd') . '.log';
+        }
 
-        // 增加日期信息，并在消息后换行，以便于日志的阅读和管理
-        $formattedMsg = PHP_EOL . date('Y-m-d H:i:s') . PHP_EOL . $msg . PHP_EOL;
+        try {
+            // 确保日志文件存在且可写
+            if (!file_exists($this->logPath)) {
+                file_put_contents($this->logPath, "", FILE_APPEND);
+            }
 
-        // 使用PHP的error_log函数将格式化后的消息记录到指定的日志文件中
-        error_log($formattedMsg, $msg_type, $logPath);
+            // 增加日期信息，并在消息后换行，以便于日志的阅读和管理
+            $formattedMsg = date('Y-m-d H:i:s') . "\n" . $msg . PHP_EOL;
+
+            // 使用PHP的error_log函数将格式化后的消息记录到指定的日志文件中
+            error_log($formattedMsg, $msg_type, $this->logPath);
+
+        } catch (Exception $e) {
+            // 记录异常信息，防止日志记录失败影响程序运行
+            fwrite(STDERR, "Failed to write log: " . $e->getMessage() . PHP_EOL);
+        }
     }
+
 
 }
