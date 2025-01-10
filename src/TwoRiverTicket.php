@@ -259,6 +259,7 @@ class TwoRiverTicket
 
             // 解码响应数据
             $resp_data = json_decode($response, true);
+            $this->error_log(json_encode($resp_data));
             if ($resp_data === null && json_last_error() !== JSON_ERROR_NONE) {
                 $this->error_log(json_encode($resp_data));
                 throw new Exception('JSON decode failed for response data.');
@@ -284,8 +285,6 @@ class TwoRiverTicket
             } else {
                 throw new Exception('响应数据中缺少 code 字段');
             }
-
-            $this->error_log(json_encode($resp_data));
 
             return $response;
 
