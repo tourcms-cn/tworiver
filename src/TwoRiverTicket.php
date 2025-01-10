@@ -250,7 +250,7 @@ class TwoRiverTicket
 
             // 检查是否有错误发生
             if (curl_errno($ch)) {
-                $this->error_log(json_encode(curl_error($ch)));
+                $this->error_log(curl_error($ch));
                 throw new Exception('cURL request failed: ' . curl_error($ch));
             }
 
@@ -259,38 +259,25 @@ class TwoRiverTicket
 
             // 解码响应数据
             $resp_data = json_decode($response, true);
-            $this->error_log(json_encode($resp_data));
+
             if ($resp_data === null && json_last_error() !== JSON_ERROR_NONE) {
-                $this->error_log(json_encode($resp_data));
                 throw new Exception('JSON decode failed for response data.');
             }
 
-            // 业务异常判断
-            if (isset($resp_data['code'])) {
-                switch ($resp_data['code']) {
-                    case '0000':
-                        if ($resp_data['data'] != null) {
-                            return json_decode($resp_data['data'], true);
-                        }
-                        break;
-                    case '1000':
-                        throw new Exception('校验错误');
-                    case '2000':
-                        throw new Exception('系统异常');
-                    case '1001':
-                        throw new Exception('参数错误');
-                    default:
-                        throw new Exception('未知错误代码: ' . $resp_data['code']);
-                }
-            } else {
-                throw new Exception('响应数据中缺少 code 字段');
+            if (isset($resp_data['code']) && $resp_data['data'] != null)
+                return json_decode($resp_data['data'], true);
+
+            if (empty($resp_data['data'])) {
+                // 业务异常判断
+                $this->error_log($req_data);
+                $this->error_log($response);
             }
 
-            return $response;
+            return $resp_data;
 
         } catch (Exception $e) {
             // 记录错误日志
-            $this->error_log('Request failed: ' . $e->getMessage());
+            $this->error_log('返回错误：' . $e->getMessage());
             // 可以根据需要抛出异常或返回错误信息
             throw $e;
         }
@@ -337,7 +324,7 @@ class TwoRiverTicket
      * 当需要记录程序中的错误信息时使用此方法它将错误信息格式化后写入到日志文件中
      * 如果未指定日志文件路径，则使用默认路径
      *
-     * @param string $msg 日志消息内容
+     * @param mixed $msg 日志消息内容
      * @param int $msg_type 日志消息类型，默认为3，表示将消息记录到系统日志以及指定的日志文件
      */
     private function error_log($msg, $msg_type = 3)
@@ -354,7 +341,14 @@ class TwoRiverTicket
             }
 
             // 增加日期信息，并在消息后换行，以便于日志的阅读和管理
-            $formattedMsg = date('Y-m-d H:i:s') . "\n" . $msg . PHP_EOL;
+            $formattedMsg = "\n" . date('Y-m-d H:i:s') . "\n";
+
+            // 使用纯文本格式记录错误信息
+            if (is_array($msg) || is_object($msg)) {
+                $formattedMsg .= json_encode($msg, JSON_UNESCAPED_UNICODE) . PHP_EOL;
+            } else {
+                $formattedMsg .= $msg . PHP_EOL;
+            }
 
             // 使用PHP的error_log函数将格式化后的消息记录到指定的日志文件中
             error_log($formattedMsg, $msg_type, $this->logPath);
@@ -364,4 +358,5 @@ class TwoRiverTicket
             fwrite(STDERR, "Failed to write log: " . $e->getMessage() . PHP_EOL);
         }
     }
+
 }
