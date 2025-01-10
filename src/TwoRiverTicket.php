@@ -264,8 +264,6 @@ class TwoRiverTicket
                 throw new Exception('JSON decode failed for response data.');
             }
 
-            $this->error_log(json_encode($resp_data));
-
             // 业务异常判断
             if (isset($resp_data['code'])) {
                 switch ($resp_data['code']) {
@@ -286,6 +284,8 @@ class TwoRiverTicket
             } else {
                 throw new Exception('响应数据中缺少 code 字段');
             }
+
+            $this->error_log(json_encode($resp_data));
 
             return $response;
 
@@ -365,6 +365,4 @@ class TwoRiverTicket
             fwrite(STDERR, "Failed to write log: " . $e->getMessage() . PHP_EOL);
         }
     }
-
-
 }
