@@ -276,8 +276,9 @@ class TwoRiverTicket
                 $return_data['msg'] = $resp_data['desicription'] ?? '未知错误';// 业务异常判断
                 $this->error_log($req_data);
                 $this->error_log($response);
+                $this->error_log($return_data);
             }
-
+            
             return $return_data;
 
         } catch (Exception $e) {
