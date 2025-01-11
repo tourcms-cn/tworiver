@@ -264,16 +264,21 @@ class TwoRiverTicket
                 throw new Exception('JSON decode failed for response data.');
             }
 
-            if (isset($resp_data['code']) && $resp_data['data'] != null)
-                return json_decode($resp_data['data'], true);
-
-            if (empty($resp_data['data'])) {
-                // 业务异常判断
+            $return_data = [
+                'status' => false,
+                'msg' => '',
+                'data' => []
+            ];
+            if (isset($resp_data['code']) && $resp_data['code'] == '0000') {
+                $return_data['status'] = true;
+                $return_data['data'] = is_null($resp_data['data']) ? [] : json_decode($resp_data['data'], true);
+            } else {
+                $return_data['msg'] = $resp_data['desicription'] ?? '未知错误';// 业务异常判断
                 $this->error_log($req_data);
                 $this->error_log($response);
             }
 
-            return $resp_data;
+            return $return_data;
 
         } catch (Exception $e) {
             // 记录错误日志
@@ -333,6 +338,8 @@ class TwoRiverTicket
         if (empty($this->logPath)) {
             $this->logPath = __DIR__ . '/logs/tworiver_' . date('Ymd') . '.log';
         }
+
+        error($this->logPath);
 
         try {
             // 确保日志文件存在且可写
