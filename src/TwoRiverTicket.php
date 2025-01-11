@@ -340,8 +340,6 @@ class TwoRiverTicket
             $this->logPath = __DIR__ . '/logs/tworiver_' . date('Ymd') . '.log';
         }
 
-        error($this->logPath);
-
         try {
             // 确保日志文件存在且可写
             if (!file_exists($this->logPath)) {
